@@ -1,0 +1,25 @@
+{
+  "name": "@mikosoft/csv",
+  "version": "1.0.0",
+  "title": "CSV File",
+  "description": "Nodejs library which helps with CSV file management.",
+  "keywords": [
+    "csv",
+    "file",
+    "parse",
+    "parser"
+  ],
+  "author": "Mikosoft",
+  "license": "MIT",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:miko-soft/csv.git"
+  },
+  "dependencies": {
+    "fs-extra": "^11.1.1"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
