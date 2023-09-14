@@ -157,7 +157,7 @@ class CSV {
         fieldValue = fieldValue.replace(/ {2,}/g, ' '); // replace 2 or more empty spaces with only one
         fieldValue = fieldValue.trim(); // trim start & end of the string
         fieldValue = fieldValue.replace(/^\"/, '').replace(/\"$/, ''); // remove " from the beginning and the end
-        // fieldValue = fieldValue.replace(/\'/g, '"'); // single quote ' to double quoted " (to ge valid JSON)
+        // fieldValue = fieldValue.replace(/\'/g, '"'); // single quote ' to double quoted " (to get valid JSON)
 
         if (!!convertType) { fieldValue = this._typeConvertor(fieldValue); }
         // console.log('fieldValue::', typeof fieldValue, fieldValue);
@@ -370,7 +370,9 @@ class CSV {
       fieldValue = fieldValue ? 'true' : 'false';
     }
 
-    fieldValue = fieldValue.slice(0, 2000); // reduce number of characters
+    fieldValue = String(fieldValue);
+
+    fieldValue = fieldValue.slice(0, 32767); // reduce number of characters according to https://support.microsoft.com/en-us/office/excel-specifications-and-limits-1672b34d-7043-467e-8e27-269d656771c3
     fieldValue = fieldValue.replace(/\"/g, '\"'); // escape double quotes
     fieldValue = fieldValue.replace(/ {2,}/g, ' '); // replace 2 or more empty spaces with just one space
     fieldValue = fieldValue.replace(/\n|\r/g, ''); // remove new line and carriage returns
