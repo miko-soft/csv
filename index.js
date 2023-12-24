@@ -52,6 +52,15 @@ class CSV {
   }
 
 
+  /**
+   * Remove CSV file if it exists.
+   * @return {void}
+   */
+  async removeFile() {
+    fse.existsSync(this.filePath) && await fse.unlink(this.filePath);
+  }
+
+
 
 
   /**
