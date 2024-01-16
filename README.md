@@ -99,6 +99,9 @@ The returned value is the array of removed row objects.
 #### async extractFields() :array
 Get fields array from the first (header) row.
 
+#### fileExists() :boolean
+Check if the CSV file defined in opts.filePath exists.
+
 
 
 ### License

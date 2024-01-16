@@ -316,6 +316,15 @@ class CSV {
   }
 
 
+  /**
+   * Check if the CSV file defined in opts.filePath exists.
+   * @returns {boolean}
+   */
+  fileExists() {
+    return fse.existsSync(this.filePath);
+  }
+
+
 
 
 
