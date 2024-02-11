@@ -23,7 +23,7 @@
     "no-template-curly-in-string": 2
 	},
 	"parserOptions": {
-		"ecmaVersion": 9,
+		"ecmaVersion": 2020,
     "sourceType": "module"
  	},
    "plugins": [

@@ -3,8 +3,8 @@ const CSV = require('../index.js');
 const fja = async () => {
 
   const csvOpts = {
-    // filePath: './read.csv',
-    filePath: './appended_arr.csv',
+    filePath: './read.csv',
+    // filePath: './appended_arr.csv',
     // filePath: './appended_obj.csv',
     // filePath: './writed_arr.csv',
     // filePath: './writed_obj.csv',

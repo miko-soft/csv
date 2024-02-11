@@ -154,15 +154,20 @@ class CSV {
     // remove empty rows
     rows = rows.filter(row => !!row);
 
-    // correct row fields
-    const splitter = this.fieldWrapper + this.fieldDelimiter + this.fieldWrapper;
-    rows = rows.map(row => {
-      const row_str_arr = row.split(splitter);  // split by , or  ","
+    // convert fields to object
+    const rowObjects = rows.map(row => {
+      // regex for commas not within double quotes  --> '"jedan","da 5,55 a","dv,a",3.33,"asd \" trt",67.34,888'.match(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/g)
+      // regex for fields separated with commas but not commas within double quotes -> '"jedan","da 5,55 a","dv,a",3.33,"asd",67.34,4545'.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g)
+
+      const reg = new RegExp(`(${this.fieldWrapper}.*?${this.fieldWrapper}|[^${this.fieldWrapper}${this.fieldDelimiter}]+)(?=\s*${this.fieldDelimiter}|\s*$)`, 'g');
+      const row_str_arr = row.match(reg);
+
       const rowObj = {};
       this.fields.forEach((field, key) => {
         let fieldValue = row_str_arr[key];
         if (!fieldValue) { rowObj[field] = ''; return; }
 
+        // correct row fields
         fieldValue = fieldValue.replace(/ {2,}/g, ' '); // replace 2 or more empty spaces with only one
         fieldValue = fieldValue.trim(); // trim start & end of the string
         fieldValue = fieldValue.replace(/^\"/, '').replace(/\"$/, ''); // remove " from the beginning and the end
@@ -178,7 +183,7 @@ class CSV {
     });
 
 
-    return rows;
+    return rowObjects;
   }
 
 
