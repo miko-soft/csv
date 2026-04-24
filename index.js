@@ -159,7 +159,7 @@ class CSV {
       // regex for commas not within double quotes  --> '"jedan","da 5,55 a","dv,a",3.33,"asd \" trt",67.34,888'.match(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/g)
       // regex for fields separated with commas but not commas within double quotes -> '"jedan","da 5,55 a","dv,a",3.33,"asd",67.34,4545'.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g)
 
-      const reg = new RegExp(`(${this.fieldWrapper}.*?${this.fieldWrapper}|[^${this.fieldWrapper}${this.fieldDelimiter}]+)(?=\s*${this.fieldDelimiter}|\s*$)`, 'g');
+      const reg = new RegExp(`(${this.fieldWrapper}.*?${this.fieldWrapper}|[^${this.fieldWrapper}${this.fieldDelimiter}]+)(?=\\s*${this.fieldDelimiter}|\\s*$)`, 'g');
       const row_str_arr = row.match(reg);
 
       const rowObj = {};
@@ -396,7 +396,7 @@ class CSV {
     fieldValue = String(fieldValue);
 
     fieldValue = fieldValue.slice(0, 32767); // reduce number of characters according to https://support.microsoft.com/en-us/office/excel-specifications-and-limits-1672b34d-7043-467e-8e27-269d656771c3
-    fieldValue = fieldValue.replace(/\"/g, '\"'); // escape double quotes
+    fieldValue = fieldValue.replace(/"/g, '""'); // escape double quotes per CSV spec
     fieldValue = fieldValue.replace(/ {2,}/g, ' '); // replace 2 or more empty spaces with just one space
     fieldValue = fieldValue.replace(/\n|\r/g, ''); // remove new line and carriage returns
     fieldValue = fieldValue.trim(); // trim start & end of the string
