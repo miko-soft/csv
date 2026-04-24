@@ -1,108 +1,164 @@
 # @mikosoft/csv
-> Nodejs library which helps with CSV file management.
-
-The library acts as a lightwight database with CSV files.
+> Node.js library for reading and writing CSV files as a lightweight database.
 
 
 ## Installation
 ```bash
-$ npm install --save @mikosoft/csv
+npm install --save @mikosoft/csv
 ```
 
 
 ## Example
 
 ```js
-/*** NodeJS script ***/
 const CSV = require('@mikosoft/csv');
 
 const func = async () => {
-
   const csvOpts = {
-    filePath: './appended_arr.csv',
+    filePath: './data.csv',
     encoding: 'utf8',
-    mode: 0o644,
-
-    fields: ['url', 'name', 'size'], // only these fields will be effective
+    mode: 0o664,
+    fields: ['url', 'name', 'size'],
     fieldDelimiter: ',',
     fieldWrapper: '"',
     rowDelimiter: '\n'
   };
   const csv = new CSV(csvOpts);
 
-  const rows = await csv.readRows(false); // all types will be string
-  // const rows = await csv.readRows(true); // or just csv.readRows()
-  console.log('rows in total:: ', rows.length);
-  console.log(JSON.stringify(rows, null, 4));
+  await csv.createFile();
+  await csv.addHeader();
+
+  await csv.appendRows([
+    { url: 'www.site1.com', name: 'Peter', size: 'M' },
+    { url: 'www.site2.com', name: 'John',  size: 'L' },
+  ]);
+
+  const rows = await csv.readRows(); // convertType defaults to true
+  console.log(rows.length, rows);
 };
 
 func().catch(console.error);
 ```
 
 
+## Constructor Options
+
+```js
+const csv = new CSV({
+  filePath: './input.csv',   // required — path to the CSV file
+  encoding: 'utf8',          // optional, default: 'utf8'
+  mode: 0o664,               // optional, default: 0o664 (octal number, not a string)
+  fields: ['url', 'name'],   // required — defines column order and active fields
+  fieldDelimiter: ',',       // optional, default: ','
+  fieldWrapper: '"',         // optional, default: '' — character wrapping each field value
+  rowDelimiter: '\n'         // optional, default: '\n'
+});
+```
+
+- `fields` is required and defines which columns are read/written and in what order.
+- `fieldWrapper: '"'` produces `"value"` cells; `fieldWrapper: ''` produces bare `value` cells.
+- `mode` must be an **octal number** (e.g. `0o664`), not a string (`'0664'`).
+
 
 ## API
 
-#### constructor(opts) :void
+### `async createFile() :void`
+Creates the CSV file at `filePath` if it does not exist. Parent directories are created automatically. If the file already exists it is **not modified**.
+
+---
+
+### `async removeFile() :void`
+Deletes the CSV file if it exists. Does nothing if the file does not exist.
+
+---
+
+### `async addHeader() :void`
+Writes the header row (derived from `fields`) to the file **only if the file is empty**. Call this after `createFile()`. If the file already has content the call is a no-op.
+
+---
+
+### `async writeRows(rows: object[] | any[][]) :void`
+Overwrites the entire file (header + rows). `rows` can be:
+- **Array of objects** — `[{ url: 'x.com', name: 'John' }, ...]` — keys must match `fields`.
+- **Array of arrays** — `[['x.com', 'John'], ...]` — values must be in the same order as `fields`.
+
+Extra keys/values beyond `fields` are silently ignored. Missing keys/values produce an empty cell.
+
+> **Caution:** All previous file content is replaced.
+
+---
+
+### `async appendRows(rows: object[] | any[][]) :void`
+Appends rows to the end of the file without touching existing content. Accepts the same `rows` formats as `writeRows`.
+
+---
+
+### `async readRows(convertType: boolean = true) :object[]`
+Reads all data rows (skips the header) and returns an array of objects keyed by `fields`.
+
+- When `convertType` is `true` (default), field values are automatically cast:
+  - Integer string `'42'` → `42`
+  - Float string `'3.14'` → `3.14`
+  - `'true'` / `'false'` → `true` / `false`
+  - Valid JSON string → parsed object
+  - Everything else stays as a string.
+- When `convertType` is `false`, all values are returned as strings.
+
+---
+
+### `async updateRows(query: object, doc: object, upsert?: boolean) :{ count: number, rows_updated: object[] }`
+Finds rows matching `query` and updates them with the fields in `doc`.
+
+- Only fields that already exist in a matched row are updated; extra fields in `doc` are ignored.
+- `upsert: true` appends `doc` as a new row when no rows match the query.
+- Returns `{ count, rows_updated }` where `count` is the number of rows changed.
+
+---
+
+### `async findRows(query?: object) :object[]`
+Returns all rows matching `query`. Calling `findRows()` or `findRows({})` returns every row.
+
+---
+
+### `async removeRows(query?: object) :object[]`
+Removes all rows matching `query` and returns them. Calling `removeRows()` or `removeRows({})` removes every row and returns all of them.
+
+---
+
+### `async extractFields() :string[]`
+Reads the header row from the file and returns the field names as an array. Also updates `this.fields` in place. Useful when `fields` are unknown before reading.
+
+---
+
+### `fileExists() :boolean`
+Synchronously returns `true` if the file at `filePath` exists, `false` otherwise.
+
+
+## Query Operators
+
+`findRows`, `removeRows`, and `updateRows` accept MongoDB-style queries:
+
 ```js
-const CSV = require('csvman);
+// Simple equality (shorthand)
+{ name: 'John' }
 
-const opts = {
-  filePath: './input.csv',
-  encoding: 'utf8',
-  mode: '0664',
-  fields: ['url', 'name'], // define active CSV fields
-  fieldDelimiter: ',',
-  fieldWrapper: '"',
-  rowDelimiter: '\n'
-}
-const csv = new CSV(opts);
+// Explicit operators
+{ name: { $eq:    'John' } }       // equal
+{ name: { $ne:    'John' } }       // not equal
+{ age:  { $gt:    25     } }       // greater than
+{ age:  { $gte:   25     } }       // greater than or equal
+{ age:  { $lt:    25     } }       // less than
+{ age:  { $lte:   25     } }       // less than or equal
+{ name: { $regex: /john/i } }      // regular expression
+{ name: { $in: ['John', 'Mark'] } }// value is in array
+{ col:  { $exists: false } }       // field existence check
+
+// Combine conditions (AND)
+{ url: 'example.com', age: { $gt: 18 } }
 ```
 
-
-#### async createFile() :void
-Create CSV file defined in opts.filePath if it does not exist. If the file exists, it is NOT MODIFIED.
-
-#### async addHeader() :void
-Add fields into the CSV Header. Only if the file is empty.
-
-#### async writeRows(rows:array) :void
-Write multiple CSV rows. The rows argument is an array of objects.
-CAUTION: Old content will be overwritten when this method is used.
-
-#### async appendRows(rows:array) :void
-Append multiple CSV rows. The rows argument is an array of objects.
-New content will be added to the old content.
-
-#### async readRows(convertType: boolean) :array
-Read CSV rows and convert it in the array of objects.
-If *convertType* is true then fields will convert the type automatically, for example string '5' will become number 5. The default is true.
-
-#### async updateRows(query:object, doc:object, upsert:boolean) :{count:number, rows_updated: object[]}
-Find CSV row by query and update it with doc.
-The query is inspired by MongoDB queries so it can use.
-```
-$eq, $ne, $gt, $gte, $lt, $lte, $regex, $in, $exists
-
-For example: {name: {$regex: /john/i}}
-```
-The doc is object whose properties are CSV fields.
-If the upsert is true insert a new row if the rows are not found by the query.
-
-#### async findRows(query) :object[]
-Find CSV rows by the query. Use MongoDb inspired queries.
-
-#### async removeRows(query) :object[]
-Find and remove CSV rows by the query. Use MongoDb inspired queries.
-The returned value is the array of removed row objects.
-
-#### async extractFields() :array
-Get fields array from the first (header) row.
-
-#### fileExists() :boolean
-Check if the CSV file defined in opts.filePath exists.
+All conditions in the query object are combined with **AND**.
 
 
-
-### License
-The software licensed under [MIT](LICENSE).
+## License
+The software is licensed under [MIT](LICENSE).
