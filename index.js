@@ -171,6 +171,7 @@ class CSV {
         fieldValue = fieldValue.replace(/ {2,}/g, ' '); // replace 2 or more empty spaces with only one
         fieldValue = fieldValue.trim(); // trim start & end of the string
         fieldValue = fieldValue.replace(/^\"/, '').replace(/\"$/, ''); // remove " from the beginning and the end
+        fieldValue = fieldValue.replace(/""/g, '"'); // unescape RFC 4180 doubled quotes
         // fieldValue = fieldValue.replace(/\'/g, '"'); // single quote ' to double quoted " (to get valid JSON)
 
         if (!!convertType) { fieldValue = this._typeConvertor(fieldValue); }
